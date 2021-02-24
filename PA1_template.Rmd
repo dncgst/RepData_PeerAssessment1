@@ -25,7 +25,7 @@ data$date <- as.Date(data$date, format = "%Y-%m-%d")
 
 ## What is mean total number of steps taken per day?
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 # split-apply-combine method
 #s <- split(data, data$date)
 #sapply(s, function(x) mean(x$steps))
@@ -38,26 +38,33 @@ data$date <- as.Date(data$date, format = "%Y-%m-%d")
 
 # dplyr method
 library(dplyr)
+
 data %>% group_by(date) %>% summarise(total = sum(steps, na.rm = TRUE))
 ```
 
 Histogram of the total number of steps taken each day
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 # histogram of the total number of steps taken each day
 
 # ggplot
 library(ggplot2)
 
-data %>% group_by(date) %>% summarise(total = sum(steps, na.rm = TRUE)) %>% ggplot() + geom_histogram(aes(total), binwidth = 1000)
+data %>% group_by(date) %>%
+  summarise(total = sum(steps, na.rm = TRUE)) %>%
+  ggplot() + geom_histogram(aes(total), binwidth = 1000)
 ```
 
 Mean and median of the total number of steps taken per day
 
 ```{r}
 # calculate the mean and median of the total number of steps taken per day
-foo <- data %>% group_by(date) %>% summarise(total = sum(steps, na.rm = TRUE))
+foo <- data %>%
+  group_by(date) %>%
+  summarise(total = sum(steps, na.rm = TRUE))
+
 mean(foo$total, na.rm = TRUE)
+
 median(foo$total, na.rm = TRUE)
 ```
 
@@ -66,13 +73,20 @@ median(foo$total, na.rm = TRUE)
 ```{r}
 # Make a time series plot (i.e. type = "l" type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
 
-data %>% group_by(interval) %>% summarise(mean = mean(steps, na.rm = TRUE), total = sum(steps, na.rm = TRUE)) %>% ggplot(aes(x=interval, y=mean)) + geom_line()
+data %>% group_by(interval) %>%
+  summarise(mean = mean(steps, na.rm = TRUE),
+            total = sum(steps, na.rm = TRUE)) %>%
+  ggplot(aes(x=interval, y=mean)) + geom_line()
 ```
 
 Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 
 ```{r}
-foo %>% dplyr::arrange(desc(total)) %>% slice_head()
+data %>% group_by(interval) %>%
+  summarise(mean = mean(steps, na.rm = TRUE),
+            total = sum(steps, na.rm = TRUE)) %>% 
+  dplyr::arrange(desc(total)) %>%
+  slice_head()
 ```
 
 ## Imputing missing values
@@ -88,14 +102,12 @@ Devise a strategy for filling in all of the missing values in the dataset. The s
 
 ```{r}
 # group by intervals and impute mean values to NAs
-foo <- data %>% group_by(interval) %>% mutate(mean = mean(steps, na.rm = TRUE)) %>% filter(is.na(steps)) %>% mutate(steps = mean) %>% ungroup() %>% select(-mean)
-
-# if_else condition...
-#data %>% group_by(interval) %>% mutate(steps2 = 
-                                         #if_else(is.na(steps),
-                                                 #mean(steps, na.rm = TRUE),
-                                                 #steps)
-                                       #)
+foo <- data %>% group_by(interval) %>% 
+  mutate(mean = mean(steps, na.rm = TRUE)) %>%
+  filter(is.na(steps)) %>% 
+  mutate(steps = mean) %>% 
+  ungroup() %>% 
+  select(-mean)
 ```
 
 Create a new dataset that is equal to the original dataset but with the missing data filled in.
@@ -109,14 +121,19 @@ Make a histogram of the total number of steps taken each day.
 ```{r}
 # histogram of the total number of steps taken each day
 
-data2 %>% group_by(date) %>% summarise(total = sum(steps, na.rm = TRUE)) %>% ggplot() + geom_histogram(aes(total), binwidth=1000)
+data2 %>% group_by(date) %>% 
+  summarise(total = sum(steps, na.rm = TRUE)) %>% 
+  ggplot() + geom_histogram(aes(total), binwidth=1000)
 ```
 
 Calculate and report the mean and median total number of steps taken per day. 
 
 ```{r}
-foo <- data2 %>% group_by(date) %>% summarise(total = sum(steps, na.rm = TRUE))
+foo <- data2 %>% group_by(date) %>% 
+  summarise(total = sum(steps, na.rm = TRUE))
+
 mean(foo$total)
+
 median(foo$total)
 ```
 
@@ -129,13 +146,20 @@ The mean and median values are now bigger and similar. The distribution resample
 Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
 
 ```{r}
-data2 <- data2 %>% mutate(weekday = weekdays(date)) %>% mutate(weekday = if_else(condition = weekday %in% c("Saturday","Sunday"), true = "weekend", false = "weekday"))
+data2 <- data2 %>% mutate(weekday = weekdays(date)) %>% 
+  mutate(weekday = if_else(condition = weekday %in% c("Saturday","Sunday"),
+                           true = "weekend", 
+                           false = "weekday"))
 ```
 
 Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis).
 
 ```{r}
 # ggplot2
-data2 %>% group_by(interval) %>% mutate(mean = mean(steps, na.rm = TRUE)) %>% ungroup() %>% ggplot(aes(x=interval, y=mean)) + geom_line() + facet_grid(rows = vars(weekday))
+data2 %>% group_by(interval) %>%
+  mutate(mean = mean(steps, na.rm = TRUE)) %>%
+  ungroup() %>%
+  ggplot(aes(x=interval, y=mean)) + geom_line() + 
+    facet_grid(rows = vars(weekday))
 ```
 
